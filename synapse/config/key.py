@@ -45,8 +45,9 @@ from synapse.util.stringutils import random_string, random_string_with_symbols
 
 from ._base import Config, ConfigError
 
-if TYPE_CHECKING:
-    from signedjson.key import VerifyKeyWithExpiry
+# VerifyKeyWithExpiry is not used in this file
+# if TYPE_CHECKING:
+#     from signedjson.key import VerifyKeyWithExpiry
 
 INSECURE_NOTARY_ERROR = """\
 Your server is configured to accept key server responses without signature
@@ -358,7 +359,7 @@ def _parse_key_servers(
     except jsonschema.ValidationError as e:
         raise ConfigError(
             "Unable to parse 'trusted_key_servers': {}".format(
-                e.message  # noqa: B306, jsonschema.ValidationError.message is a valid attribute
+                e.message  # noqa: SLF001  # jsonschema.ValidationError.message is a valid attribute
             )
         )
 

@@ -37,6 +37,7 @@ from typing import (
 from urllib.parse import urlencode, urlparse
 
 import attr
+import jinja2
 import unpaddedbase64
 from authlib.common.security import generate_token
 from authlib.jose import JsonWebToken, JWTClaims
@@ -1601,7 +1602,7 @@ def jinja_finalize(thing: Any) -> Any:
     return thing if thing is not None else ""
 
 
-env = Environment(finalize=jinja_finalize)
+env = Environment(finalize=jinja_finalize, autoescape=jinja2.select_autoescape())
 env.filters.update(
     {
         "localpart_from_email": _localpart_from_email_filter,

@@ -99,9 +99,6 @@ if TYPE_CHECKING:
 # so we should prefer importing from `python_multipart` when possible.
 try:
     from python_multipart import MultipartParser
-
-    if TYPE_CHECKING:
-        from python_multipart import multipart
 except ImportError:
     from multipart import MultipartParser  # type: ignore[no-redef]
 

@@ -55,8 +55,9 @@ from synapse.logging.opentracing import start_active_span
 from synapse.metrics import Histogram, LaterGauge
 from synapse.util import Clock
 
-if typing.TYPE_CHECKING:
-    from contextlib import _GeneratorContextManager
+# _GeneratorContextManager is not used in this file
+# if typing.TYPE_CHECKING:
+#     from contextlib import _GeneratorContextManager
 
 logger = logging.getLogger(__name__)
 

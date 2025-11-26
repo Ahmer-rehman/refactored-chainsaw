@@ -140,9 +140,26 @@ def main() -> None:
     installReactor(proxy_reactor)
 
     # Import the entrypoints for all the workers.
+    # Whitelist of allowed worker modules to prevent arbitrary code execution
+    ALLOWED_WORKER_MODULES = {
+        "synapse.app.generic_worker",
+        "synapse.app.homeserver",
+        # Add other valid worker modules here as needed
+    }
+
     worker_functions = []
     for worker_args in args_by_worker:
-        worker_module = importlib.import_module(worker_args[0])
+        worker_module_name = worker_args[0]
+        # Validate module name to prevent arbitrary code execution
+        if worker_module_name not in ALLOWED_WORKER_MODULES:
+            # Also allow modules that start with synapse.app. for flexibility
+            # but validate they're in the synapse.app namespace
+            if not worker_module_name.startswith("synapse.app."):
+                raise ValueError(
+                    f"Invalid worker module: {worker_module_name}. "
+                    "Only synapse.app.* modules are allowed."
+                )
+        worker_module = importlib.import_module(worker_module_name)
         worker_functions.append(worker_module.main)
 
     # We need to prepare the database first as otherwise all the workers will

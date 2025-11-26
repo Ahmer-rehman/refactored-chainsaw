@@ -369,6 +369,7 @@ def _ordered_events(events: Iterable[EventBase]) -> List[EventBase]:
     def key_func(e: EventBase) -> Tuple[int, str]:
         # we have to use utf-8 rather than ascii here because it turns out we allow
         # people to send us events with non-ascii event IDs :/
-        return -int(e.depth), hashlib.sha1(e.event_id.encode("utf-8")).hexdigest()
+        # Note: SHA1 is used here for non-security purposes (deterministic sorting)
+        return -int(e.depth), hashlib.sha1(e.event_id.encode("utf-8"), usedforsecurity=False).hexdigest()
 
     return sorted(events, key=key_func)

@@ -284,10 +284,10 @@ class InternalAuth(BaseAuth):
             TypeError,
             ValueError,
         ) as e:
+            # Don't log the exception details to avoid credential leakage
             logger.warning(
-                "Invalid access token in auth: %s %s.",
-                type(e),
-                e,
+                "Invalid access token in auth: %s",
+                type(e).__name__,
             )
             raise InvalidClientTokenError("Invalid access token passed.")
 

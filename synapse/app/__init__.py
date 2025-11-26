@@ -30,7 +30,7 @@ try:
     check_dependencies.check_requirements()
 except check_dependencies.DependencyException as e:
     sys.stderr.writelines(
-        e.message  # noqa: B306, DependencyException.message is a property
+        e.message  # noqa: SLF001  # DependencyException.message is a property
     )
     sys.exit(1)
 

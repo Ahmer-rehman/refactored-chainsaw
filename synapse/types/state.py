@@ -42,7 +42,7 @@ from synapse.api.constants import EventTypes
 from synapse.types import MutableStateMap, StateKey, StateMap
 
 if TYPE_CHECKING:
-    from typing import FrozenSet  # noqa: used within quoted type hint; flake8 sad
+    from typing import FrozenSet  # noqa: F401  # used within quoted type hint
 
 
 logger = logging.getLogger(__name__)
@@ -462,7 +462,7 @@ class StateFilter:
             new_types.update({state_type: set() for state_type in minus_wildcards})
 
         # insert the plus wildcards
-        new_types.update({state_type: None for state_type in plus_wildcards})
+        new_types.update(dict.fromkeys(plus_wildcards))
 
         # insert the specific state keys
         for state_type, state_key in plus_state_keys:

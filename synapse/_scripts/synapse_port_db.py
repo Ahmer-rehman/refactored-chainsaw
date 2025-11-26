@@ -216,6 +216,25 @@ IGNORED_TABLES = {
 }
 
 
+def _validate_table_name(table: str) -> str:
+    """Validate table name to prevent SQL injection.
+
+    Args:
+        table: Table name to validate
+
+    Returns:
+        Validated table name
+
+    Raises:
+        ValueError: If table name contains invalid characters
+    """
+    # Only allow alphanumeric characters, underscores, and hyphens
+    # Table names should match: ^[a-zA-Z0-9_-]+$
+    if not table or not all(c.isalnum() or c in ('_', '-') for c in table):
+        raise ValueError(f"Invalid table name: {table}")
+    return table
+
+
 # Error returned by the run function. Used at the top-level part of the script to
 # handle errors and return codes.
 end_error: Optional[str] = None
@@ -271,16 +290,20 @@ class Store(
     def insert_many_txn(
         self, txn: LoggingTransaction, table: str, headers: List[str], rows: List[Tuple]
     ) -> None:
+        # Validate table name to prevent SQL injection
+        validated_table = _validate_table_name(table)
+        # Validate column names to prevent SQL injection
+        validated_headers = [_validate_table_name(h) for h in headers]
         sql = "INSERT INTO %s (%s) VALUES (%s)" % (
-            table,
-            ", ".join(k for k in headers),
-            ", ".join("%s" for _ in headers),
+            validated_table,
+            ", ".join(k for k in validated_headers),
+            ", ".join("%s" for _ in validated_headers),
         )
 
         try:
             txn.executemany(sql, rows)
         except Exception:
-            logger.exception("Failed to insert: %s", table)
+            logger.exception("Failed to insert: %s", validated_table)
             raise
 
     # Note: the parent method is an `async def`.
@@ -371,7 +394,9 @@ class Porter:
                 txn.execute(
                     "DELETE FROM port_from_sqlite3 WHERE table_name = %s", (table,)
                 )
-                txn.execute("TRUNCATE %s CASCADE" % (table,))
+                # Validate table name to prevent SQL injection
+                validated_table = _validate_table_name(table)
+                txn.execute("TRUNCATE %s CASCADE" % (validated_table,))
 
             await self.postgres_store.execute(delete_all)
 
@@ -460,13 +485,15 @@ class Porter:
 
         # We sweep over rowids in two directions: one forwards (rowids 1, 2, 3, ...)
         # and another backwards (rowids 0, -1, -2, ...).
+        # Validate table name to prevent SQL injection
+        validated_table = _validate_table_name(table)
         forward_select = (
-            "SELECT rowid, * FROM %s WHERE rowid >= ? ORDER BY rowid LIMIT ?" % (table,)
+            "SELECT rowid, * FROM %s WHERE rowid >= ? ORDER BY rowid LIMIT ?" % (validated_table,)
         )
 
         backward_select = (
             "SELECT rowid, * FROM %s WHERE rowid <= ? ORDER BY rowid DESC LIMIT ?"
-            % (table,)
+            % (validated_table,)
         )
 
         do_forward = [True]
@@ -1049,25 +1076,29 @@ class Porter:
     async def _get_remaining_count_to_port(
         self, table: str, forward_chunk: int, backward_chunk: int
     ) -> int:
+        # Validate table name to prevent SQL injection
+        validated_table = _validate_table_name(table)
         frows = cast(
             List[Tuple[int]],
             await self.sqlite_store.execute_sql(
-                "SELECT count(*) FROM %s WHERE rowid >= ?" % (table,), forward_chunk
+                "SELECT count(*) FROM %s WHERE rowid >= ?" % (validated_table,), forward_chunk
             ),
         )
 
         brows = cast(
             List[Tuple[int]],
             await self.sqlite_store.execute_sql(
-                "SELECT count(*) FROM %s WHERE rowid <= ?" % (table,), backward_chunk
+                "SELECT count(*) FROM %s WHERE rowid <= ?" % (validated_table,), backward_chunk
             ),
         )
 
         return frows[0][0] + brows[0][0]
 
     async def _get_already_ported_count(self, table: str) -> int:
+        # Validate table name to prevent SQL injection
+        validated_table = _validate_table_name(table)
         rows = await self.postgres_store.execute_sql(
-            "SELECT count(*) FROM %s" % (table,)
+            "SELECT count(*) FROM %s" % (validated_table,)
         )
 
         return rows[0][0]

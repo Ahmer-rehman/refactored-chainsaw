@@ -129,12 +129,12 @@ class EventValidator:
                     # items in an array. However, the POWER_LEVELS_SCHEMA doesn't expect
                     # to see any arrays.
                     message = (
-                        '"' + cast(str, e.path[-1]) + '": ' + e.message  # noqa: B306
+                        '"' + cast(str, e.path[-1]) + '": ' + e.message  # noqa: SLF001
                     )
                     # jsonschema.ValidationError.message is a valid attribute
                 else:
                     # example: '0' is not of type 'integer'
-                    message = e.message  # noqa: B306
+                    message = e.message  # noqa: SLF001
                     # jsonschema.ValidationError.message is a valid attribute
 
                 raise SynapseError(
