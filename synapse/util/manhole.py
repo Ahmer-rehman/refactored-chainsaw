@@ -78,8 +78,7 @@ def manhole(settings: ManholeConfig, globals: Dict[str, Any]) -> ServerFactory:
     the supplied globals.
 
     Args:
-        username: The username ssh clients should auth with.
-        password: The password ssh clients should auth with.
+        settings: The manhole configuration containing username, password, and keys.
         globals: The variables to expose in the shell.
 
     Returns:
