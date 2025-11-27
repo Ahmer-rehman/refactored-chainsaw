@@ -23,6 +23,8 @@ import sys
 import traceback
 from typing import Any, Dict, Optional
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from twisted.conch import manhole_ssh
 from twisted.conch.insults import insults
 from twisted.conch.manhole import ColoredManhole, ManholeInterpreter
@@ -33,42 +35,40 @@ from twisted.internet.protocol import ServerFactory
 
 from synapse.config.server import ManholeConfig
 
-PUBLIC_KEY = (
-    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDHhGATaW4KhE23+7nrH4jFx3yLq9OjaEs5"
-    "XALqeK+7385NlLja3DE/DO9mGhnd9+bAy39EKT3sTV6+WXQ4yD0TvEEyUEMtjWkSEm6U32+C"
-    "DaS3TW/vPBUMeJQwq+Ydcif1UlnpXrDDTamD0AU9VaEvHq+3HAkipqn0TGpKON6aqk4vauDx"
-    "oXSsV5TXBVrxP/y7HpMOpU4GUWsaaacBTKKNnUaQB4UflvydaPJUuwdaCUJGTMjbhWrjVfK+"
-    "jslseSPxU6XvrkZMyCr4znxvuDxjMk1RGIdO7v+rbBMLEgqtSMNqJbYeVCnj2CFgc3fcTcld"
-    "X2uOJDrJb/WRlHulthCh"
-)
 
-PRIVATE_KEY = """-----BEGIN RSA PRIVATE KEY-----
-MIIEpQIBAAKCAQEAx4RgE2luCoRNt/u56x+Ixcd8i6vTo2hLOVwC6nivu9/OTZS4
-2twxPwzvZhoZ3ffmwMt/RCk97E1evll0OMg9E7xBMlBDLY1pEhJulN9vgg2kt01v
-7zwVDHiUMKvmHXIn9VJZ6V6ww02pg9AFPVWhLx6vtxwJIqap9ExqSjjemqpOL2rg
-8aF0rFeU1wVa8T/8ux6TDqVOBlFrGmmnAUyijZ1GkAeFH5b8nWjyVLsHWglCRkzI
-24Vq41Xyvo7JbHkj8VOl765GTMgq+M58b7g8YzJNURiHTu7/q2wTCxIKrUjDaiW2
-HlQp49ghYHN33E3JXV9rjiQ6yW/1kZR7pbYQoQIDAQABAoIBAQC8KJ0q8Wzzwh5B
-esa1dQHZ8+4DEsL/Amae66VcVwD0X3cCN1W2IZ7X5W0Ij2kBqr8V51RYhcR+S+Ek
-BtzSiBUBvbKGrqcMGKaUgomDIMzai99hd0gvCCyZnEW1OQhFkNkaRNXCfqiZJ27M
-fqvSUiU2eOwh9fCvmxoA6Of8o3FbzcJ+1GMcobWRllDtLmj6lgVbDzuA+0jC5daB
-9Tj1pBzu3wn3ufxiS+gBnJ+7NcXH3E73lqCcPa2ufbZ1haxfiGCnRIhFXuQDgxFX
-vKdEfDgtvas6r1ahGbc+b/q8E8fZT7cABuIU4yfOORK+MhpyWbvoyyzuVGKj3PKt
-KSPJu5CZAoGBAOkoJfAVyYteqKcmGTanGqQnAY43CaYf6GdSPX/jg+JmKZg0zqMC
-jWZUtPb93i+jnOInbrnuHOiHAxI8wmhEPed28H2lC/LU8PzlqFkZXKFZ4vLOhhRB
-/HeHCFIDosPFlohWi3b+GAjD7sXgnIuGmnXWe2ea/TS3yersifDEoKKjAoGBANsQ
-gJX2cJv1c3jhdgcs8vAt5zIOKcCLTOr/QPmVf/kxjNgndswcKHwsxE/voTO9q+TF
-v/6yCSTxAdjuKz1oIYWgi/dZo82bBKWxNRpgrGviU3/zwxiHlyIXUhzQu78q3VS/
-7S1XVbc7qMV++XkYKHPVD+nVG/gGzFxumX7MLXfrAoGBAJit9cn2OnjNj9uFE1W6
-r7N254ndeLAUjPe73xH0RtTm2a4WRopwjW/JYIetTuYbWgyujc+robqTTuuOZjAp
-H/CG7o0Ym251CypQqaFO/l2aowclPp/dZhpPjp9GSjuxFBZLtiBB3DNBOwbRQzIK
-/vLTdRQvZkgzYkI4i0vjNt3JAoGBANP8HSKBLymMlShlrSx2b8TB9tc2Y2riohVJ
-2ttqs0M2kt/dGJWdrgOz4mikL+983Olt/0P9juHDoxEEMK2kpcPEv40lnmBpYU7h
-s8yJvnBLvJe2EJYdJ8AipyAhUX1FgpbvfxmASP8eaUxsegeXvBWTGWojAoS6N2o+
-0KSl+l3vAoGAFqm0gO9f/Q1Se60YQd4l2PZeMnJFv0slpgHHUwegmd6wJhOD7zJ1
-CkZcXwiv7Nog7AI9qKJEUXLjoqL+vJskBzSOqU3tcd670YQMi1aXSXJqYE202K7o
-EddTrx3TNpr1D5m/f+6mnXWrc8u9y1+GNx9yz889xMjIBTBI9KqaaOs=
------END RSA PRIVATE KEY-----"""
+def _generate_ssh_key_pair() -> tuple[Key, Key]:
+    """Generate a new RSA SSH key pair dynamically.
+    
+    This function generates a new RSA key pair each time it's called,
+    avoiding the security risk of hardcoded keys.
+    
+    Returns:
+        A tuple of (private_key, public_key) as Twisted Key objects.
+    """
+    # Generate a new RSA private key (2048 bits)
+    private_key = rsa.generate_private_key(
+        public_exponent=65537,
+        key_size=2048,
+    )
+    
+    # Serialize the private key in PEM format
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    
+    # Serialize the public key in OpenSSH format
+    public_ssh = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.OpenSSH,
+        format=serialization.PublicFormat.OpenSSH,
+    )
+    
+    # Convert to Twisted Key objects
+    priv_key = Key.fromString(private_pem)
+    pub_key = Key.fromString(public_ssh)
+    
+    return priv_key, pub_key
 
 
 def manhole(settings: ManholeConfig, globals: Dict[str, Any]) -> ServerFactory:
@@ -88,10 +88,38 @@ def manhole(settings: ManholeConfig, globals: Dict[str, Any]) -> ServerFactory:
     password = settings.password.encode("ascii")
     priv_key = settings.priv_key
     if priv_key is None:
-        priv_key = Key.fromString(PRIVATE_KEY)
-    pub_key = settings.pub_key
-    if pub_key is None:
-        pub_key = Key.fromString(PUBLIC_KEY)
+        # Generate keys dynamically instead of using hardcoded keys
+        priv_key, pub_key = _generate_ssh_key_pair()
+    else:
+        pub_key = settings.pub_key
+        if pub_key is None:
+            # If private key is provided but public key is not, derive it
+            # Extract the public key from the private key
+            # Try to get the key data from Twisted Key object
+            try:
+                # Get the private key in PEM format
+                private_key_data = priv_key.toString("PEM")
+                if isinstance(private_key_data, str):
+                    private_key_bytes = private_key_data.encode()
+                else:
+                    private_key_bytes = private_key_data
+                
+                # Parse with cryptography library
+                crypto_priv_key = serialization.load_pem_private_key(
+                    private_key_bytes,
+                    password=None,
+                )
+                
+                # Extract public key in OpenSSH format
+                public_ssh = crypto_priv_key.public_key().public_bytes(
+                    encoding=serialization.Encoding.OpenSSH,
+                    format=serialization.PublicFormat.OpenSSH,
+                )
+                pub_key = Key.fromString(public_ssh)
+            except Exception:
+                # If extraction fails, generate a new key pair
+                # This is a fallback - ideally keys should be provided as a pair
+                priv_key, pub_key = _generate_ssh_key_pair()
 
     checker = checkers.InMemoryUsernamePasswordDatabaseDontUse(**{username: password})
 
