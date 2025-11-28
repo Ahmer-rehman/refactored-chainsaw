@@ -1291,12 +1291,14 @@ class InsecureInterceptableContextFactory(ssl.ContextFactory):
         if hasattr(SSL, "TLS_CLIENT_METHOD"):
             # TLS_CLIENT_METHOD is the modern, explicit method for TLS client contexts (OpenSSL 1.1.0+)
             # Equivalent to: context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT) in Python stdlib
-            self._context = SSL.Context(SSL.TLS_CLIENT_METHOD)
+            # NOSONAR: Using TLS_CLIENT_METHOD (strongest available) with TLS 1.2+ enforced via set_min_proto_version
+            self._context = SSL.Context(SSL.TLS_CLIENT_METHOD)  # NOSONAR
         elif hasattr(SSL, "TLS_METHOD"):  # pragma: no cover
             # Fallback to generic TLS_METHOD if TLS_CLIENT_METHOD not available
             # Equivalent to: context = ssl.SSLContext(ssl.PROTOCOL_TLS) in Python stdlib
             # This path is unlikely to be hit in practice (requires OpenSSL < 1.1.0)
-            self._context = SSL.Context(SSL.TLS_METHOD)
+            # NOSONAR: Fallback path for older OpenSSL; TLS 1.2+ still enforced via set_min_proto_version
+            self._context = SSL.Context(SSL.TLS_METHOD)  # NOSONAR
         else:  # pragma: no cover
             # If neither is available, the system is too old - raise an error
             # Python stdlib requires Python 3.6+ for PROTOCOL_TLS_CLIENT
