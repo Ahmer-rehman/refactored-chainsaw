@@ -80,16 +80,46 @@ class ServerContextFactory(ContextFactory):
         except Exception:
             logger.exception("Failed to enable elliptic curve for TLS")
 
+        # Disable all weak/insecure protocols - enforce TLS 1.2 minimum
+        # OP_NO_TLSv1 and OP_NO_TLSv1_1 disable TLS 1.0 and 1.1
+        # This ensures only TLS 1.2 and 1.3 are allowed
         context.set_options(
-            SSL.OP_NO_SSLv2 | SSL.OP_NO_SSLv3 | SSL.OP_NO_TLSv1 | SSL.OP_NO_TLSv1_1
+            SSL.OP_NO_SSLv2
+            | SSL.OP_NO_SSLv3
+            | SSL.OP_NO_TLSv1
+            | SSL.OP_NO_TLSv1_1
+            | SSL.OP_NO_COMPRESSION  # Disable compression (CRIME vulnerability)
+            | SSL.OP_CIPHER_SERVER_PREFERENCE  # Prefer server cipher order
         )
+
+        # Set minimum protocol version to TLS 1.2 if supported
+        # This provides an additional layer of enforcement
+        if hasattr(context, "set_min_proto_version"):
+            # OpenSSL 1.1.1+ supports explicit minimum version setting
+            try:
+                # Use TLS1_2_VERSION constant if available
+                if hasattr(SSL, "TLS1_2_VERSION"):
+                    context.set_min_proto_version(SSL.TLS1_2_VERSION)
+                else:
+                    # Fallback: use numeric value for TLS 1.2 (0x0303)
+                    context.set_min_proto_version(0x0303)
+            except Exception as e:
+                logger.warning(
+                    "Failed to set minimum TLS protocol version, using options instead: %s", e
+                )
+
         context.use_certificate_chain_file(config.tls.tls_certificate_file)
         assert config.tls.tls_private_key is not None
         context.use_privatekey(config.tls.tls_private_key)
 
-        # https://hynek.me/articles/hardening-your-web-servers-ssl-ciphers/
+        # Updated cipher list for stronger security:
+        # - Prefer ECDHE (forward secrecy) with AES-GCM and ChaCha20-Poly1305
+        # - Remove MD5, SHA1, and other weak algorithms (SHA256/SHA384 are fine)
+        # - Remove AES-CCM (less secure than GCM)
+        # - Remove NULL, anon, export, DES, RC4, and 3DES ciphers
+        # - TLS 1.3 cipher suites are negotiated separately and automatically
         context.set_cipher_list(
-            b"ECDH+AESGCM:ECDH+CHACHA20:ECDH+AES256:ECDH+AES128:!aNULL:!SHA1:!AESCCM"
+            b"ECDHE+AESGCM:ECDHE+CHACHA20:ECDHE+AES256:ECDHE+AES128:!aNULL:!eNULL:!MD5:!SHA1:!AESCCM:!DES:!RC4:!3DES:!EXPORT:!LOW"
         )
 
     def getContext(self) -> SSL.Context:
@@ -123,7 +153,19 @@ class FederationPolicyForHTTPS:
         # moving to TLS 1.2 by default, we want to respect the config option if
         # it is set to 1.0 (which the alternate option, raiseMinimumTo, will not
         # let us do).
+        # Security note: TLS 1.0 and 1.1 are deprecated and insecure. We allow
+        # configuration for backward compatibility, but strongly recommend TLS 1.2 minimum.
         minTLS = _TLS_VERSION_MAP[config.tls.federation_client_minimum_tls_version]
+        
+        # Enforce TLS 1.2 as absolute minimum for security, unless explicitly
+        # configured lower (for legacy compatibility)
+        if minTLS in (TLSVersion.TLSv1_0, TLSVersion.TLSv1_1):
+            logger.warning(
+                "federation_client_minimum_tls_version is set to %s. "
+                "TLS 1.0 and 1.1 are deprecated and insecure. "
+                "Consider upgrading to TLS 1.2 minimum.",
+                config.tls.federation_client_minimum_tls_version
+            )
 
         _verify_ssl = CertificateOptions(
             trustRoot=trust_root, insecurelyLowerMinimumTo=minTLS
@@ -183,7 +225,32 @@ class RegularPolicyForHTTPS:
 
     def __init__(self) -> None:
         trust_root = platformTrust()
-        self._ssl_context = CertificateOptions(trustRoot=trust_root).getContext()
+        certificate_options = CertificateOptions(trustRoot=trust_root)
+        self._ssl_context = certificate_options.getContext()
+        
+        # Enforce TLS 1.2 minimum for regular HTTPS connections
+        # This ensures strong security for all outbound client connections
+        # Disable weak/insecure protocols
+        self._ssl_context.set_options(
+            SSL.OP_NO_SSLv2
+            | SSL.OP_NO_SSLv3
+            | SSL.OP_NO_TLSv1
+            | SSL.OP_NO_TLSv1_1
+            | SSL.OP_NO_COMPRESSION  # Disable compression (CRIME vulnerability)
+        )
+        
+        # Set minimum protocol version to TLS 1.2 if supported
+        if hasattr(self._ssl_context, "set_min_proto_version"):
+            try:
+                if hasattr(SSL, "TLS1_2_VERSION"):
+                    self._ssl_context.set_min_proto_version(SSL.TLS1_2_VERSION)
+                else:
+                    # Fallback: use numeric value for TLS 1.2 (0x0303)
+                    self._ssl_context.set_min_proto_version(0x0303)
+            except Exception:
+                # If setting minimum version fails, options above still enforce it
+                pass
+        
         self._ssl_context.set_info_callback(_context_info_cb)
 
     def creatorForNetloc(

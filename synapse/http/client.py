@@ -1276,11 +1276,44 @@ class InsecureInterceptableContextFactory(ssl.ContextFactory):
     Factory for PyOpenSSL SSL contexts which accepts any certificate for any domain.
 
     Do not use this since it allows an attacker to intercept your communications.
+    
+    Note: While this factory disables certificate verification, it still enforces
+    strong TLS protocol settings (TLS 1.2 minimum) and secure cipher suites
+    to prevent protocol-level vulnerabilities.
     """
 
     def __init__(self) -> None:
         self._context = SSL.Context(SSL.SSLv23_METHOD)
+        # Disable certificate verification (insecure by design for testing)
         self._context.set_verify(VERIFY_NONE, lambda *_: False)
+        
+        # Even though we don't verify certificates, enforce strong TLS protocol settings
+        # Disable all weak/insecure protocols - enforce TLS 1.2 minimum
+        self._context.set_options(
+            SSL.OP_NO_SSLv2
+            | SSL.OP_NO_SSLv3
+            | SSL.OP_NO_TLSv1
+            | SSL.OP_NO_TLSv1_1
+            | SSL.OP_NO_COMPRESSION  # Disable compression (CRIME vulnerability)
+        )
+        
+        # Set minimum protocol version to TLS 1.2 if supported
+        if hasattr(self._context, "set_min_proto_version"):
+            try:
+                if hasattr(SSL, "TLS1_2_VERSION"):
+                    self._context.set_min_proto_version(SSL.TLS1_2_VERSION)
+                else:
+                    # Fallback: use numeric value for TLS 1.2 (0x0303)
+                    self._context.set_min_proto_version(0x0303)
+            except Exception:
+                # If setting minimum version fails, options above still enforce it
+                pass
+        
+        # Use strong cipher suites even without certificate verification
+        # This prevents protocol-level attacks even in testing scenarios
+        self._context.set_cipher_list(
+            b"ECDHE+AESGCM:ECDHE+CHACHA20:ECDHE+AES256:ECDHE+AES128:!aNULL:!eNULL:!MD5:!SHA1:!AESCCM:!DES:!RC4:!3DES:!EXPORT:!LOW"
+        )
 
     def getContext(self) -> SSL.Context:
         return self._context
