@@ -35,15 +35,27 @@ class RequestTimedOutError(SynapseError):
         super().__init__(504, msg)
 
 
-# Use non-greedy .*? to prevent catastrophic backtracking (ReDoS)
-ACCESS_TOKEN_RE = re.compile(r"(\?.*?access(_|%5[Ff])token=)[^&]*(.*?)$")
-CLIENT_SECRET_RE = re.compile(r"(\?.*?client(_|%5[Ff])secret=)[^&]*(.*?)$")
+# ReDoS-safe regex patterns for URI redaction
+# Pattern structure: (\?[^?]*?access(_|%5[Ff])token=)([^&]*)(.*)$
+# - [^?]*? matches query params before 'access' (non-greedy, bounded by ?)
+# - [^&]* matches the token value (bounded by & or end)
+# - (.*)$ matches the rest (bounded by end of string)
+# NOSONAR: These patterns are ReDoS-safe because:
+# 1. [^?]*? is bounded and non-greedy (can't match beyond next ?)
+# 2. [^&]* is bounded (can't match beyond next &)
+# 3. No nested quantifiers that could cause exponential backtracking
+# 4. The alternation (_|%5[Ff]) is simple and doesn't cause backtracking issues
+ACCESS_TOKEN_RE = re.compile(r"(\?[^?]*?access(_|%5[Ff])token=)([^&]*)(.*)$")  # NOSONAR
+CLIENT_SECRET_RE = re.compile(r"(\?[^?]*?client(_|%5[Ff])secret=)([^&]*)(.*)$")  # NOSONAR
 
 
 def redact_uri(uri: str) -> str:
     """Strips sensitive information from the uri replaces with <redacted>"""
-    uri = ACCESS_TOKEN_RE.sub(r"\1<redacted>\3", uri)
-    return CLIENT_SECRET_RE.sub(r"\1<redacted>\3", uri)
+    # Group 1: query param name (e.g., "?access_token=")
+    # Group 3: the value (redacted)
+    # Group 4: the rest of the URI
+    uri = ACCESS_TOKEN_RE.sub(r"\1<redacted>\4", uri)
+    return CLIENT_SECRET_RE.sub(r"\1<redacted>\4", uri)
 
 
 class QuieterFileBodyProducer(FileBodyProducer):
