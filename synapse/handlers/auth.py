@@ -83,6 +83,13 @@ from synapse.util.msisdn import phone_number_to_msisdn
 from synapse.util.stringutils import base62_encode
 from synapse.util.threepids import canonicalise_email
 
+# Import 2FA service conditionally
+try:
+    from synapse.util.two_factor import TwoFactorAuthService, TOTP_AVAILABLE
+except ImportError:
+    TOTP_AVAILABLE = False
+    TwoFactorAuthService = None  # type: ignore
+
 if TYPE_CHECKING:
     from synapse.module_api import ModuleApi
     from synapse.rest.client.login import LoginResponse
@@ -239,6 +246,16 @@ class AuthHandler:
         )
 
         self._clock = self.hs.get_clock()
+
+        # Initialize 2FA service if available
+        if TOTP_AVAILABLE and TwoFactorAuthService:
+            try:
+                self._two_factor_service = TwoFactorAuthService(self.hs.hostname)
+            except Exception as e:
+                logger.warning("Failed to initialize 2FA service: %s", e)
+                self._two_factor_service = None
+        else:
+            self._two_factor_service = None
 
         # Expire old UI auth sessions after a period of time.
         if hs.config.worker.run_background_tasks:
@@ -1374,6 +1391,59 @@ class AuthHandler:
             )
 
             if canonical_user_id:
+                # Verify 2FA if enabled
+                if self._two_factor_service:
+                    two_fa_enabled = await self.store.is_2fa_enabled(canonical_user_id)
+                    if two_fa_enabled:
+                        # Get 2FA code from login submission (support multiple field names)
+                        two_factor_code = (
+                            login_submission.get("two_factor_code")
+                            or login_submission.get("totp_code")
+                            or login_submission.get("m.login.totp")
+                        )
+
+                        if not two_factor_code:
+                            raise LoginError(
+                                403,
+                                "Two-factor authentication is enabled. Please provide a TOTP code.",
+                                errcode=Codes.FORBIDDEN,
+                            )
+
+                        # Get TOTP secret
+                        totp_secret = await self.store.get_user_totp_secret(
+                            canonical_user_id
+                        )
+
+                        if not totp_secret:
+                            raise LoginError(
+                                403,
+                                "2FA is enabled but no secret found. Please contact support.",
+                                errcode=Codes.FORBIDDEN,
+                            )
+
+                        # Try TOTP verification first
+                        is_valid = self._two_factor_service.verify_totp(
+                            totp_secret, str(two_factor_code)
+                        )
+
+                        # If TOTP fails, try backup code
+                        if not is_valid:
+                            backup_code_hash = (
+                                self._two_factor_service.hash_backup_code(
+                                    str(two_factor_code)
+                                )
+                            )
+                            is_valid = await self.store.verify_backup_code(
+                                canonical_user_id, backup_code_hash
+                            )
+
+                        if not is_valid:
+                            raise LoginError(
+                                403,
+                                "Invalid two-factor authentication code.",
+                                errcode=Codes.FORBIDDEN,
+                            )
+
                 return canonical_user_id, None
 
         if not known_login_type:

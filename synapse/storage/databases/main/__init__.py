@@ -82,6 +82,7 @@ from .stream import StreamWorkerStore
 from .tags import TagsStore
 from .task_scheduler import TaskSchedulerWorkerStore
 from .transactions import TransactionWorkerStore
+from .two_factor import TwoFactorStore
 from .ui_auth import UIAuthStore
 from .user_directory import UserDirectoryStore
 from .user_erasure_store import UserErasureStore
@@ -160,6 +161,7 @@ class DataStore(
     TaskSchedulerWorkerStore,
     SlidingSyncStore,
     DelayedEventsStore,
+    TwoFactorStore,
 ):
     def __init__(
         self,
