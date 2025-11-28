@@ -94,8 +94,8 @@ def manhole(settings: ManholeConfig, globals: Dict[str, Any]) -> ServerFactory:
         # Generate keys dynamically instead of using hardcoded keys
         priv_key, pub_key = _generate_ssh_key_pair()
     else:
-        pub_key = settings.pub_key
-        if pub_key is None:
+    pub_key = settings.pub_key
+    if pub_key is None:
             # If private key is provided but public key is not, derive it
             # Extract the public key from the private key
             # Try to get the key data from Twisted Key object

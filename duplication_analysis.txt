@@ -1,0 +1,771 @@
+DETAILED DUPLICATION ANALYSIS
+================================================================================
+
+
+Database query patterns (2319 occurrences):
+--------------------------------------------------------------------------------
+scripts-dev/mypy_synapse_plugin.py:77
+  awaitable, unwrap the awaitable's final value.
+        elif signature.ret_type.type.fullname == "typing.Awaitable":
+            return signature.ret_t...
+
+tests/server.py:304
+  await_result(self, timeout_ms: int = 1000) -> None:
+        """
+        Wait until the request is finished.
+        """
+        end_time = self._react...
+
+tests/server.py:371
+  await_result: bool = True,
+    custom_headers: Optional[Iterable[CustomHeaderType]] = None,
+    client_ip: str = "127.0.0.1",
+) -> FakeChannel:
+    ""...
+
+tests/test_state.py:174
+  await_full_state: bool = True
+    ) -> Dict[str, int]:
+        res = {}
+        for event in event_ids:
+            res[event] = self._event_to_state_...
+
+tests/test_server.py:317
+  await self.callback(request)
+
+    def setUp(self) -> None:
+        reactor, _ = get_clock()
+        self.reactor = reactor
+
+    def test_good_response...
+
+tests/test_event_auth.py:35
+  awaitable_result
+
+
+class _StubEventSourceStore:
+    """A stub implementation of the EventSourceStore"""
+
+    def __init__(self) -> None:
+        self....
+
+tests/unittest.py:94
+  awaitable_errors
+from tests.test_utils.logging_setup import setup_logging
+from tests.utils import checked_cast, default_config, setupdb
+
+setupdb()
+set...
+
+tests/unittest.py:222
+  awaitable_errors())
+
+            return orig()
+
+        # We want to force a GC to workaround problems with deferreds leaking
+        # logcontexts wh...
+
+tests/unittest.py:583
+  await_result: bool = True,
+        custom_headers: Optional[Iterable[CustomHeaderType]] = None,
+        client_ip: str = "127.0.0.1",
+    ) -> FakeCha...
+
+synapse/notifier.py:320
+  await self.notify_new_room_events(event_entries, max_room_stream_token)
+
+    async def on_un_partial_stated_room(
+        self,
+        room_id: str,
+...
+
+synapse/notifier.py:380
+  await self._third_party_rules.on_new_event(event_id)
+
+        self._notify_pending_new_room_events(max_room_stream_token)
+
+        self.notify_replica...
+
+synapse/notifier.py:608
+  await self.store.get_rooms_for_user(user_id)...
+
+synapse/notifier.py:647
+  await listener
+
+                        log_kv(
+                            {
+                                "wait_for_events": "woken",
+            ...
+
+synapse/notifier.py:710
+  await self._get_room_ids(user, explicit_room_id)
+        is_peeking = not is_joined
+
+        async def check_for_updates(
+            before_token: St...
+
+synapse/notifier.py:731
+  await source.get_new_events(
+                    user=user,
+                    from_key=from_token.get_field(keyname)...
+
+synapse/notifier.py:741
+  await filter_events_for_client(
+                        self._storage_controllers,
+                        user.to_string(),
+                        n...
+
+synapse/notifier.py:795
+  await self.event_sources.bound_future_token(stream_token)
+
+        start = self.clock.time_msec()
+        logged = False
+        while True:
+         ...
+
+synapse/notifier.py:818
+  await self.clock.sleep(0.5)
+
+    async def _get_room_ids(
+        self, user: UserID, explicit_room_id: Optional[str]
+    ) -> Tuple[StrCollection, bo...
+
+synapse/notifier.py:827
+  await self._is_world_readable(explicit_room_id):
+                return [explicit_room_id], False
+            raise AuthError(403, "Non-joined access ...
+
+synapse/visibility.py:123
+  await storage.state.get_state_for_events(
+        frozenset(e.event_id for e in events if not e.internal_metadata.outlier)...
+
+
+Logging patterns (1456 occurrences):
+--------------------------------------------------------------------------------
+scripts-dev/check_pydantic_models.py:129
+  logger.debug("Is %s unwanted?")...
+
+scripts-dev/check_pydantic_models.py:131
+  logger.debug("yes")...
+
+scripts-dev/check_pydantic_models.py:133
+  logger.debug("Maybe. Subargs are %s", get_args(type_)...
+
+scripts-dev/check_pydantic_models.py:135
+  logger.debug("Conclusion: %s %s unwanted", type_, "is" if rv else "is not")...
+
+scripts-dev/check_pydantic_models.py:220
+  logger.debug("Importing synapse")...
+
+scripts-dev/check_pydantic_models.py:226
+  logger.warning("Bad annotation found when importing synapse")...
+
+scripts-dev/check_pydantic_models.py:231
+  logger.debug("Fetching subpackages")...
+
+scripts-dev/check_pydantic_models.py:236
+  logger.warning("Bad annotation found when looking for modules to import")...
+
+scripts-dev/check_pydantic_models.py:241
+  logger.debug("Importing %s", module_info.name)...
+
+scripts-dev/check_pydantic_models.py:245
+  logger.warning(
+                    f"Bad annotation found when importing {module_info.name}"
+                )...
+
+tests/server.py:837
+  logger.info("FakeTransport: loseConnection()...
+
+tests/server.py:846
+  logger.info(
+                    "FakeTransport: Delaying disconnect until buffer is flushed"
+                )...
+
+tests/server.py:854
+  logger.info("FakeTransport: abortConnection()...
+
+tests/server.py:926
+  logger.info("%s->%s: %s", self._protocol, self.other, to_write)...
+
+tests/server.py:939
+  logger.info("FakeTransport: Buffer now empty, completing disconnect")...
+
+tests/server.py:1064
+  logger.debug("Will persist db to %s", test_db_location)...
+
+tests/server.py:1071
+  logger.debug("Removed existing DB at %s", test_db_location)...
+
+tests/server.py:1228
+  logger.info("Loaded local module %s", m)...
+
+synapse/notifier.py:546
+  logger.debug(
+                    "to-device messages stream id %s, awaking streams for %s",
+                    new_token,
+                    users,...
+
+synapse/notifier.py:810
+  logger.info(
+                    "Waiting for current token to reach %s; currently at %s",
+                    stream_token,
+                    curre...
+
+
+Validation with SynapseError (295 occurrences):
+--------------------------------------------------------------------------------
+synapse/event_auth.py:118
+  if not hasattr(event, "room_id"):
+        raise AuthError(500, "Event has no room_id: %s" % event)
+
+    # check that the event has the correct signatu...
+
+synapse/event_auth.py:866
+  if not isinstance(event.redacts, str):
+            return False
+        redactee_domain = get_domain_from_id(event.redacts)
+        if redacter_domain...
+
+synapse/event_auth.py:914
+  if not isinstance(v, collections.abc.Mapping) or not all(
+                    type(v) is int
+                    for v in v.values()  # noqa: E721
+   ...
+
+synapse/crypto/event_signing.py:61
+  if not isinstance(hashes, collections.abc.Mapping):
+        raise SynapseError...
+
+synapse/crypto/keyring.py:271
+  if not verify_request.key_ids:
+            raise SynapseError...
+
+synapse/crypto/keyring.py:310
+  if not key_result:
+                continue
+
+            if key_result.valid_until_ts < verify_request.minimum_valid_until_ts:
+                continu...
+
+synapse/http/servlet.py:190
+  if not required:
+            return default
+
+        message = f"Missing required integer query parameter {name}"
+        raise SynapseError(HTTPStatu...
+
+synapse/http/servlet.py:837
+  if not content_bytes and allow_empty_body:
+        return None
+
+    try:
+        content = json_decoder.decode(content_bytes.decode("utf-8"))
+    exce...
+
+synapse/http/servlet.py:1013
+  if not resolved_room_id:
+            raise SynapseError...
+
+synapse/http/client.py:206
+  if not isinstance(address, (IPv4Address, IPv6Address)):
+                    continue
+
+                ip_address = IPAddress(address.host)
+
+          ...
+
+synapse/types/__init__.py:234
+  if not isinstance(user_id, UserID):
+        user_id = UserID.from_string(user_id)
+
+    if authenticated_entity is None:
+        authenticated_entity =...
+
+synapse/types/__init__.py:426
+  if not isinstance(username, bytes):
+        username = username.encode("utf-8")
+
+    # first we sort out upper-case characters
+    if case_sensitive:
+...
+
+synapse/types/__init__.py:1135
+  if not self_value.is_before_or_eq(other_value):
+                    return False
+            elif isinstance(self_value, MultiWriterStreamToken):
+    ...
+
+synapse/handlers/pagination.py:229
+  if not r:
+                logger.warning(
+                    "[purge] purging events not possible: No event found "
+                    "(ts %i => st...
+
+synapse/handlers/pagination.py:463
+  if not use_admin_priviledge:
+            (
+                membership,
+                member_event_id,
+            ) = await self.auth.check_user_in_...
+
+synapse/handlers/pagination.py:750
+  if not self.hs.is_mine_id(new_room_user_id):
+                raise SynapseError...
+
+synapse/handlers/search.py:93
+  if not predecessor:
+                # We have reached the end of the chain of predecessors
+                break
+
+            if not isinstance(predec...
+
+synapse/handlers/admin.py:251
+  if not events:
+                    break
+
+                last_event = events[-1]
+                assert last_event.internal_metadata.stream_ordering
+...
+
+synapse/handlers/set_password.py:51
+  if not self._auth_handler.can_change_password():
+            raise SynapseError...
+
+synapse/handlers/deactivate_account.py:92
+  if not await self._third_party_rules.check_can_deactivate_user(
+            user_id, by_admin
+        ):
+            raise SynapseError...
+
+
+Attr classes with similar structure (283 occurrences):
+--------------------------------------------------------------------------------
+scripts-dev/release.py:850
+  @attr.s(auto_attribs=True)
+    class VersionSection:...
+
+tests/utils.py:246
+  @attr.s(slots=True, auto_attribs=True)
+class Timer:...
+
+tests/utils.py:254
+  @attr.s(slots=True, auto_attribs=True)
+class Looper:...
+
+tests/server.py:140
+  @attr.s(auto_attribs=True)
+class FakeChannel:...
+
+tests/server.py:784
+  @attr.s(cmp=False, auto_attribs=True)
+class FakeTransport:...
+
+synapse/notifier.py:190
+  @attr.s(slots=True, frozen=True, auto_attribs=True)
+class EventStreamResult:...
+
+synapse/notifier.py:200
+  @attr.s(slots=True, frozen=True, auto_attribs=True)
+class _PendingRoomEventEntry:...
+
+synapse/notifier.py:904
+  @attr.s(auto_attribs=True)
+class ReplicationNotifier:...
+
+synapse/visibility.py:433
+  @attr.s(frozen=True, slots=True, auto_attribs=True)
+class _CheckMembershipReturn:...
+
+tests/crypto/test_keyring.py:82
+  @attr.s(slots=True, auto_attribs=True)
+class FakeRequest:...
+
+tests/test_utils/oidc.py:40
+  @attr.s(slots=True, frozen=True, auto_attribs=True)
+class FakeAuthorizationGrant:...
+
+tests/test_utils/__init__.py:97
+  @attr.s(slots=True, frozen=True, auto_attribs=True)
+class FakeResponse:...
+
+tests/handlers/test_sliding_sync.py:3223
+  @attr.s(slots=True, auto_attribs=True, frozen=True)
+class RequiredStateChangesTestParameters:...
+
+tests/handlers/test_saml.py:60
+  @attr.s
+class FakeAuthnResponse:...
+
+tests/events/test_presence_router.py:47
+  @attr.s
+class PresenceRouterTestConfig:...
+
+tests/events/test_auto_accept_invites.py:599
+  @attr.s(auto_attribs=True)
+class MockEvent:...
+
+tests/media/test_media_storage.py:130
+  @attr.s(auto_attribs=True, slots=True, frozen=True)
+class TestImage:...
+
+tests/storage/test_event_federation.py:193
+  @attr.s(auto_attribs=True, frozen=True, slots=True)
+class _BackfillSetupInfo:...
+
+tests/storage/test_event_federation.py:1226
+  @attr.s(auto_attribs=True)
+class FakeEvent:...
+
+tests/storage/test_sliding_sync_tables.py:50
+  @attr.s(slots=True, frozen=True, auto_attribs=True)
+class _SlidingSyncJoinedRoomResult:...
+
+
+Error handling with SynapseError (258 occurrences):
+--------------------------------------------------------------------------------
+synapse/server.py:214
+  try:
+            return getattr(self, depname)
+        except AttributeError:
+            pass
+
+        # Prevent cyclic dependencies from deadlocking...
+
+synapse/event_auth.py:814
+  try:
+                colon_idx = state_key.index(":", 1)
+                suffix_idx = state_key.find("_", colon_idx + 1)
+                state_key_use...
+
+synapse/event_auth.py:886
+  try:
+            UserID.from_string(k)
+        except Exception:
+            raise SynapseError...
+
+synapse/event_auth.py:891
+  try:
+            int(v)
+        except Exception:
+            raise SynapseError...
+
+tests/crypto/test_keyring.py:132
+  try:
+                    await res_deferreds[1]
+                    self.assertFalse("unsigned json didn't cause a failure")
+                except Sy...
+
+tests/handlers/test_register.py:742
+  try:
+            await self.handler.check_username(localpart)
+        except SynapseError...
+
+tests/rest/client/test_third_party_rules.py:139
+  try:
+            self.room_id = self.helper.create_room_as(self.user_id, tok=self.tok)
+        except Exception:
+            pass
+
+    def test_third_...
+
+tests/util/caches/test_descriptors.py:343
+  try:
+                    d = obj.fn(1)
+                    self.assertEqual(
+                        current_context(),
+                        SENTIN...
+
+synapse/util/msisdn.py:45
+  try:
+        phoneNumber = phonenumbers.parse(number, country)
+    except phonenumbers.NumberParseException:
+        raise SynapseError...
+
+synapse/util/stringutils.py:64
+  try:
+        s.decode("ascii").encode("ascii")
+    except UnicodeError:
+        return False
+    return True
+
+
+def assert_valid_client_secret(client_s...
+
+synapse/crypto/event_signing.py:73
+  try:
+        message_hash_bytes = decode_base64(message_hash_base64)
+    except Exception:
+        raise SynapseError...
+
+synapse/crypto/keyring.py:332
+  try:
+            verify_signed_json(
+                verify_request.get_json_object(),
+                verify_request.server_name,
+                ver...
+
+synapse/http/server.py:57
+  try:
+    from twisted.web.pages import notFound
+except ImportError:
+    from twisted.web.resource import NoResource as notFound  # type: ignore[assign...
+
+synapse/http/server.py:157
+  try:
+                request.channel.forceAbortClient()
+            except Exception:
+                # abortConnection throws if the connection is al...
+
+synapse/http/servlet.py:196
+  try:
+        integer = int(args[name_bytes][0])
+    except Exception:
+        message = f"Query parameter {name} must be an integer"
+        raise Syn...
+
+synapse/http/servlet.py:297
+  try:
+            return {b"true": True, b"false": False}[args[name_bytes][0]]
+        except Exception:
+            message = (
+                "Boole...
+
+synapse/http/servlet.py:528
+  try:
+        return json_decoder.decode(urlparse.unquote(json_str))
+    except Exception:
+        message = f"Query parameter {name} must be a valid J...
+
+synapse/http/servlet.py:607
+  try:
+        value_str = value.decode(encoding)
+    except ValueError:
+        raise SynapseError...
+
+synapse/http/servlet.py:832
+  try:
+        content_bytes = request.content.read()  # type: ignore
+    except Exception:
+        raise SynapseError...
+
+synapse/http/servlet.py:840
+  try:
+        content = json_decoder.decode(content_bytes.decode("utf-8"))
+    except Exception as e:
+        logger.warning(
+            "Unable to pa...
+
+
+SynapseError 400 patterns (182 occurrences):
+--------------------------------------------------------------------------------
+synapse/event_auth.py:889
+  raise SynapseError(400, "Not a valid user_id: %s" % (k,)...
+
+synapse/event_auth.py:894
+  raise SynapseError(400, "Not a valid power level: %s" % (v,)...
+
+synapse/event_auth.py:912
+  raise SynapseError(400, f"{v!r} must be an integer.")...
+
+tests/handlers/test_register.py:738
+  raise SynapseError(400, "Request must include user id")...
+
+tests/util/caches/test_descriptors.py:336
+  raise SynapseError(400, "blah")...
+
+synapse/util/msisdn.py:48
+  raise SynapseError(400, "Unable to parse phone number")...
+
+synapse/types/__init__.py:257
+  raise SynapseError(400, "Invalid ID: %r" % (string,)...
+
+synapse/types/__init__.py:264
+  raise SynapseError(400, "Invalid ID: %r" % (string,)...
+
+synapse/types/__init__.py:703
+  raise SynapseError(400, "Invalid room stream token %r" % (string,)...
+
+synapse/types/__init__.py:712
+  raise SynapseError(400, "Invalid room stream token %r" % (string,)...
+
+synapse/types/__init__.py:826
+  raise SynapseError(400, "Invalid stream token %r" % (string,)...
+
+synapse/types/__init__.py:1026
+  raise SynapseError(400, "Invalid stream token")...
+
+synapse/types/__init__.py:1198
+  raise SynapseError(400, "Invalid stream token")...
+
+synapse/types/__init__.py:1263
+  raise SynapseError(400, "Invalid ID %r" % (s,)...
+
+synapse/handlers/pagination.py:406
+  raise SynapseError(400, "Users are still joined to this room")...
+
+synapse/handlers/pagination.py:743
+  raise SynapseError(400, "Purge already in progress for %s" % (room_id,)...
+
+synapse/handlers/search.py:134
+  raise SynapseError(400, "Search is disabled on this homeserver")...
+
+synapse/handlers/search.py:148
+  raise SynapseError(400, "Invalid batch")...
+
+synapse/handlers/search.py:197
+  raise SynapseError(400, "Invalid search query")...
+
+synapse/handlers/search.py:200
+  raise SynapseError(400, "Invalid order by: %r" % (order_by,)...
+
+
+Error response formatting (22 occurrences):
+--------------------------------------------------------------------------------
+tests/crypto/test_keyring.py:65
+  return {"%s:%s" % (vk.alg, vk.version): encode_verify_key_base64(vk)}
+
+    def get_signed_key(self, server_name: str, verify_key: VerifyKey) -> JsonDi...
+
+tests/crypto/test_keyring.py:356
+  return {get_key_id(key1): FetchKeyResult(get_verify_key(key1), 1200)}
+
+        mock_fetcher1 = Mock()
+        mock_fetcher1.get_keys = Mock(side_effec...
+
+tests/handlers/test_password_providers.py:79
+  return {"test.login_type": ["test_field"]}
+
+    def check_auth(self, *args: str) -> Mock:
+        return mock_password_provider.check_auth(*args)
+
+
+cl...
+
+tests/handlers/test_oauth_delegation.py:90
+  return {
+            "issuer": ISSUER,
+            "authorization_endpoint": AUTHORIZATION_ENDPOINT,
+            "token_endpoint": TOKEN_ENDPOINT,
+   ...
+
+tests/rest/media/test_url_preview.py:161
+  return {"/_matrix/media": self.hs.get_media_repository_resource()}
+
+    def _assert_small_png(self, json_body: JsonDict) -> None:
+        """Assert pr...
+
+tests/rest/client/test_rendezvous.py:50
+  return {
+            **super().create_resource_dict(),
+            "/_synapse/client/rendezvous": MSC4108RendezvousSessionResource(self.hs),
+        }...
+
+tests/rest/client/test_account.py:1399
+  return {
+                    "account_statuses": {
+                        users[1]: {
+                            "exists": True,
+                   ...
+
+tests/replication/http/test__base.py:50
+  return {}
+
+    @cancellable
+    async def _handle_request(  # type: ignore[override]
+        self, request: Request, content: JsonDict
+    ) -> Tuple[...
+
+synapse/http/servlet.py:298
+  return {b"true": True, b"false": False}[args[name_bytes][0]]
+        except Exception:
+            message = (
+                "Boolean query paramete...
+
+synapse/handlers/room_list.py:100
+  return {"chunk": [], "total_room_count_estimate": 0}
+
+        logger.info(
+            "Getting public room list: limit=%r, since=%r, search=%r, netwo...
+
+synapse/handlers/device.py:471
+  return {
+            "user_id": user_id,
+            "stream_id": stream_id,
+            "devices": devices,
+            "master_key": master_key,
+   ...
+
+synapse/handlers/profile.py:95
+  return {
+                "displayname": profileinfo.display_name,
+                "avatar_url": profileinfo.avatar_url,
+            }
+        else:
+  ...
+
+synapse/handlers/e2e_keys.py:324
+  return {"device_keys": results, "failures": failures, **cross_signing_keys}
+
+    @trace
+    async def _query_devices_for_destination(
+        self,
+  ...
+
+synapse/handlers/message.py:369
+  return {
+            user_id: {
+                "avatar_url": profile.avatar_url,
+                "display_name": profile.display_name,
+            }
+...
+
+synapse/handlers/auth.py:181
+  return {
+        "type": "m.id.thirdparty",
+        "medium": "msisdn",
+        "address": msisdn,
+    }
+
+
+@attr.s(slots=True, auto_attribs=True)
+clas...
+
+synapse/api/errors.py:727
+  return {
+            "level": self.level,
+            "code": self.code,
+            "reason": self.reason,
+            "affected": self.affected,
+   ...
+
+synapse/federation/federation_server.py:515
+  return {}
+                except FederationError as e:
+                    logger.warning("Error handling PDU %s: %s", event_id, e)
+                  ...
+
+synapse/federation/federation_server.py:877
+  return {"knock_room_state": stripped_room_state}
+
+    async def _on_send_membership_event(
+        self, origin: str, content: JsonDict, membership_ty...
+
+synapse/module_api/__init__.py:1549
+  return {key: state_events[event_id] for key, event_id in state_ids.items()}
+
+    async def defer_to_thread(
+        self,
+        f: Callable[P, T],
+ ...
+
+synapse/rest/admin/rooms.py:150
+  return {
+        "delete_id": task.id,
+        "status": task.status,
+        "shutdown_room": task.result,
+    }
+
+
+class DeleteRoomStatusByRoomIdRest...
+

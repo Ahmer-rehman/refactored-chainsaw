@@ -228,6 +228,10 @@ setuptools_rust = ">=1.3"
 # This is used for parsing multipart responses
 python-multipart = ">=0.0.9"
 
+# Two-Factor Authentication dependencies
+pyotp = ">=2.9.0"
+qrcode = { version = ">=7.4.2", extras = ["pil"] }
+
 # Optional Dependencies
 # ---------------------
 matrix-synapse-ldap3 = { version = ">=0.1", optional = true }
