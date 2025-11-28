@@ -61,15 +61,18 @@ class ServerContextFactory(ContextFactory):
     """
 
     def __init__(self, config: HomeServerConfig):
-        # TODO: once pyOpenSSL exposes TLS_METHOD and SSL_CTX_set_min_proto_version,
-        # switch to those (see https://github.com/pyca/cryptography/issues/5379).
-        #
-        # note that, despite the confusing name, SSLv23_METHOD does *not* enforce SSLv2
-        # or v3, but is a synonym for TLS_METHOD, which allows the client and server
-        # to negotiate an appropriate version of TLS constrained by the version options
-        # set with context.set_options.
-        #
-        self._context = SSL.Context(SSL.SSLv23_METHOD)
+        # Use the strongest available TLS method
+        # Prefer TLS_METHOD if available (OpenSSL 1.1.0+), otherwise fall back to SSLv23_METHOD
+        # Note: SSLv23_METHOD is a legacy name but is actually TLS_METHOD under the hood
+        # It allows negotiation of TLS versions constrained by set_options
+        if hasattr(SSL, "TLS_METHOD"):
+            # TLS_METHOD is the modern, explicit method for TLS (OpenSSL 1.1.0+)
+            # This is preferred over SSLv23_METHOD for clarity and future compatibility
+            self._context = SSL.Context(SSL.TLS_METHOD)
+        else:
+            # Fallback for older OpenSSL versions
+            # SSLv23_METHOD is actually TLS_METHOD, despite the confusing name
+            self._context = SSL.Context(SSL.SSLv23_METHOD)
         self.configure_context(self._context, config)
 
     @staticmethod

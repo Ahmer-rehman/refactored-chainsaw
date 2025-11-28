@@ -1283,7 +1283,16 @@ class InsecureInterceptableContextFactory(ssl.ContextFactory):
     """
 
     def __init__(self) -> None:
-        self._context = SSL.Context(SSL.SSLv23_METHOD)
+        # Use the strongest available TLS method
+        # Prefer TLS_METHOD if available (OpenSSL 1.1.0+), otherwise fall back to SSLv23_METHOD
+        if hasattr(SSL, "TLS_METHOD"):
+            # TLS_METHOD is the modern, explicit method for TLS (OpenSSL 1.1.0+)
+            # This is preferred over SSLv23_METHOD for clarity and future compatibility
+            self._context = SSL.Context(SSL.TLS_METHOD)
+        else:
+            # Fallback for older OpenSSL versions
+            # SSLv23_METHOD is actually TLS_METHOD, despite the confusing name
+            self._context = SSL.Context(SSL.SSLv23_METHOD)
         # Disable certificate verification (insecure by design for testing)
         self._context.set_verify(VERIFY_NONE, lambda *_: False)
         
