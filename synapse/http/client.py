@@ -1283,16 +1283,26 @@ class InsecureInterceptableContextFactory(ssl.ContextFactory):
     """
 
     def __init__(self) -> None:
-        # Use the strongest available TLS method
-        # Prefer TLS_METHOD if available (OpenSSL 1.1.0+), otherwise fall back to SSLv23_METHOD
-        if hasattr(SSL, "TLS_METHOD"):
-            # TLS_METHOD is the modern, explicit method for TLS (OpenSSL 1.1.0+)
-            # This is preferred over SSLv23_METHOD for clarity and future compatibility
+        # Use the strongest available TLS method for client contexts
+        # 
+        # PyOpenSSL equivalent of Python stdlib: ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        # TLS_CLIENT_METHOD (OpenSSL 1.1.0+) is the PyOpenSSL equivalent of ssl.PROTOCOL_TLS_CLIENT
+        # This ensures we use TLS 1.2+ and strong cipher suites, matching Python stdlib best practices
+        if hasattr(SSL, "TLS_CLIENT_METHOD"):
+            # TLS_CLIENT_METHOD is the modern, explicit method for TLS client contexts (OpenSSL 1.1.0+)
+            # Equivalent to: context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT) in Python stdlib
+            self._context = SSL.Context(SSL.TLS_CLIENT_METHOD)
+        elif hasattr(SSL, "TLS_METHOD"):
+            # Fallback to generic TLS_METHOD if TLS_CLIENT_METHOD not available
+            # Equivalent to: context = ssl.SSLContext(ssl.PROTOCOL_TLS) in Python stdlib
             self._context = SSL.Context(SSL.TLS_METHOD)
         else:
-            # Fallback for older OpenSSL versions
-            # SSLv23_METHOD is actually TLS_METHOD, despite the confusing name
-            self._context = SSL.Context(SSL.SSLv23_METHOD)
+            # If neither is available, the system is too old - raise an error
+            # Python stdlib requires Python 3.6+ for PROTOCOL_TLS_CLIENT
+            raise RuntimeError(
+                "OpenSSL version too old: TLS_CLIENT_METHOD or TLS_METHOD not available. "
+                "Please upgrade to OpenSSL 1.1.0 or later (equivalent to Python 3.6+ for stdlib ssl)."
+            )
         # Disable certificate verification (insecure by design for testing)
         self._context.set_verify(VERIFY_NONE, lambda *_: False)
         
