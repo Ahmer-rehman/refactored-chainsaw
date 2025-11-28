@@ -148,7 +148,9 @@ class TwistedHttpClient(HttpClient):
         retries_left = 5
         print("%s to %s with headers %s" % (method, url, headers_dict))
         if self.verbose and producer:
-            if "password" in producer.data:
+            # NOSONAR: This is security code that redacts passwords before logging
+            # The string "password" is used as a dictionary key to check for and redact sensitive data
+            if "password" in producer.data:  # NOSONAR
                 temp = producer.data["password"]
                 producer.data["password"] = "[REDACTED]"
                 print(json.dumps(producer.data, indent=4))
