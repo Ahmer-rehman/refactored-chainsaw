@@ -365,8 +365,11 @@ def convert(src: str, dst: str, **template_vars: object) -> None:
     """
     # Read the template file
     # We disable autoescape to prevent template variables from being escaped,
-    # as we're not using HTML.
-    env = Environment(loader=FileSystemLoader(os.path.dirname(src)), autoescape=False)
+    # as we're not using HTML. This script generates configuration files (YAML,
+    # nginx config, supervisord config, shell scripts) which are not HTML and
+    # do not require HTML escaping. Auto-escaping would corrupt these config files.
+    # NOSONAR: autoescape=False is safe here because templates generate non-HTML config files
+    env = Environment(loader=FileSystemLoader(os.path.dirname(src)), autoescape=False)  # NOSONAR
     template = env.get_template(os.path.basename(src))
 
     # Generate a string from the template.
