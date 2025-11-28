@@ -154,7 +154,6 @@ class SynapseCmd(cmd.Cmd):
 
         password = None
         pwd = None
-        pwd2 = "_"
         while pwd != pwd2:
             pwd = getpass.getpass("Type a password for this user: ")
             pwd2 = getpass.getpass("Retype the password: ")
