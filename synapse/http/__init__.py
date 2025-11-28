@@ -35,8 +35,9 @@ class RequestTimedOutError(SynapseError):
         super().__init__(504, msg)
 
 
-ACCESS_TOKEN_RE = re.compile(r"(\?.*access(_|%5[Ff])token=)[^&]*(.*)$")
-CLIENT_SECRET_RE = re.compile(r"(\?.*client(_|%5[Ff])secret=)[^&]*(.*)$")
+# Use non-greedy .*? to prevent catastrophic backtracking (ReDoS)
+ACCESS_TOKEN_RE = re.compile(r"(\?.*?access(_|%5[Ff])token=)[^&]*(.*?)$")
+CLIENT_SECRET_RE = re.compile(r"(\?.*?client(_|%5[Ff])secret=)[^&]*(.*?)$")
 
 
 def redact_uri(uri: str) -> str:

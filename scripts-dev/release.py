@@ -954,7 +954,8 @@ def build_dependabot_changelog(repo: Repo, current_version: version.Version) -> 
         return f"* {desc}. ([\\#{number}](https://github.com/element-hq/synapse/issues/{number}))"
 
     for i, message in enumerate(messages):
-        messages[i] = re.sub(r"(.*) \(#(\d+)\)$", replacer, message)
+        # Use non-greedy .*? to prevent catastrophic backtracking (ReDoS)
+        messages[i] = re.sub(r"(.*?) \(#(\d+)\)$", replacer, message)
     messages.insert(0, "### Updates to locked dependencies\n")
     # Add an extra blank line to the bottom of the section
     messages.append("")

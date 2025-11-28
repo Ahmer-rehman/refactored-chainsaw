@@ -504,7 +504,9 @@ def summarize_paragraphs(
 
     description = description.strip()
     description = re.sub(r"[\t ]+", " ", description)
-    description = re.sub(r"[\t \r\n]*[\r\n]+", "\n\n", description)
+    # Match zero or more tabs/spaces (excluding newlines) followed by newlines
+    # Separating whitespace from newlines prevents catastrophic backtracking (ReDoS)
+    description = re.sub(r"[\t ]*[\r\n]+", "\n\n", description)
 
     # If the concatenation of paragraphs to get above MIN_SIZE
     # took us over MAX_SIZE, then we need to truncate mid paragraph

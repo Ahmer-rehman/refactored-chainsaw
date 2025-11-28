@@ -8,7 +8,8 @@ from typing import Any, Dict, List
 import click
 import git
 
-SCHEMA_FILE_REGEX = re.compile(r"^synapse/storage/schema/(.*)/delta/(.*)/(.*)$")
+# Use [^/]+ instead of .* to prevent catastrophic backtracking (ReDoS)
+SCHEMA_FILE_REGEX = re.compile(r"^synapse/storage/schema/([^/]+)/delta/([^/]+)/([^/]+)$")
 
 
 @click.command()

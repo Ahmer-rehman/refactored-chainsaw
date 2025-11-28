@@ -34,7 +34,8 @@ logger = logging.getLogger(__name__)
 
 # intentionally looser than what aliases we allow to be registered since
 # other HSes may allow aliases that we would not
-ALIAS_RE = re.compile(r"^#.*:.+$")
+# Use [^:]* instead of .* to prevent catastrophic backtracking (ReDoS)
+ALIAS_RE = re.compile(r"^#[^:]*:.+$")
 
 ALL_ALONE = "Empty Room"
 

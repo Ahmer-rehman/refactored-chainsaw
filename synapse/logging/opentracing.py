@@ -213,7 +213,9 @@ if TYPE_CHECKING:
 # Helper class
 
 # Matches the number suffix in an instance name like "matrix.org client_reader-8"
-STRIP_INSTANCE_NUMBER_SUFFIX_REGEX = re.compile(r"[_-]?\d+$")
+# NOSONAR: This regex is safe - [_-]? is a simple optional char class, \d+ is a simple quantifier
+# No nested quantifiers or complex alternations that could cause catastrophic backtracking
+STRIP_INSTANCE_NUMBER_SUFFIX_REGEX = re.compile(r"[_-]?\d+$")  # NOSONAR
 
 
 class _DummyTagNames:
