@@ -590,11 +590,13 @@ class StaticResource(File):
     """
     A resource that represents a plain non-interpreted file or directory.
 
-    Differs from the File resource by adding clickjacking protection.
+    Differs from the File resource by adding clickjacking protection and
+    comprehensive security headers.
     """
 
     def render_GET(self, request: Request) -> bytes:
         set_clickjacking_protection_headers(request)
+        set_security_headers(request, is_static_file=True)
         return super().render_GET(request)
 
     def directoryListing(self) -> IResource:
@@ -904,6 +906,17 @@ def set_cors_headers(request: "SynapseRequest") -> None:
 
     Args:
         request: The http request to add CORS to.
+
+    Security Note:
+        This function sets Access-Control-Allow-Origin to "*" (wildcard), which
+        allows any origin to make requests to the API. This is necessary for
+        Matrix client compatibility but has security implications:
+        - Any website can make XHR requests to the API
+        - Credentials cannot be sent with wildcard CORS (cookies/auth headers)
+        - Consider restricting CORS in production if not needed for public APIs
+
+        For Matrix federation and client APIs, wildcard CORS is typically required.
+        For internal/admin APIs, consider restricting to specific origins.
     """
     request.setHeader(b"Access-Control-Allow-Origin", b"*")
     request.setHeader(
@@ -978,6 +991,8 @@ def respond_with_html_bytes(request: Request, code: int, html_bytes: bytes) -> N
 
     # Ensure this content cannot be embedded.
     set_clickjacking_protection_headers(request)
+    # Add comprehensive security headers
+    set_security_headers(request, is_static_file=False)
 
     request.write(html_bytes)
     finish_request(request)
@@ -996,6 +1011,54 @@ def set_clickjacking_protection_headers(request: Request) -> None:
     """
     request.setHeader(b"X-Frame-Options", b"DENY")
     request.setHeader(b"Content-Security-Policy", b"frame-ancestors 'none';")
+
+
+def set_security_headers(request: Request, is_static_file: bool = False) -> None:
+    """
+    Set comprehensive security headers for HTTP responses.
+
+    This function sets security headers including:
+    - X-Content-Type-Options: Prevents MIME type sniffing
+    - Permissions-Policy: Restricts browser features and APIs
+    - Content-Security-Policy: Enhanced CSP with object-src for static files
+
+    Args:
+        request: The http request to add security headers to.
+        is_static_file: If True, adds object-src 'none' to CSP for static files.
+    """
+    # Prevent MIME type sniffing (XSS protection)
+    request.setHeader(b"X-Content-Type-Options", b"nosniff")
+
+    # Permissions-Policy: Restrict browser features and APIs
+    # Disable potentially dangerous features by default
+    permissions_policy = (
+        b"geolocation=(), "
+        b"microphone=(), "
+        b"camera=(), "
+        b"payment=(), "
+        b"usb=(), "
+        b"magnetometer=(), "
+        b"gyroscope=(), "
+        b"accelerometer=()"
+    )
+    request.setHeader(b"Permissions-Policy", permissions_policy)
+
+    # Enhanced CSP for static files
+    if is_static_file:
+        # For static files, add object-src 'none' to prevent plugin injection
+        # Get existing CSP if present, otherwise use frame-ancestors
+        existing_csp = request.getHeader(b"Content-Security-Policy")
+        if existing_csp:
+            # Append object-src if not already present
+            if b"object-src" not in existing_csp:
+                csp = existing_csp + b" object-src 'none';"
+                request.setHeader(b"Content-Security-Policy", csp)
+        else:
+            # Set basic CSP with object-src for static files
+            request.setHeader(
+                b"Content-Security-Policy",
+                b"frame-ancestors 'none'; object-src 'none';",
+            )
 
 
 def respond_with_redirect(
