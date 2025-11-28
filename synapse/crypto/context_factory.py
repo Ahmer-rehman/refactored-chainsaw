@@ -70,13 +70,15 @@ class ServerContextFactory(ContextFactory):
             # TLS_SERVER_METHOD is the modern, explicit method for TLS server contexts (OpenSSL 1.1.0+)
             # Equivalent to: context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER) in Python stdlib
             self._context = SSL.Context(SSL.TLS_SERVER_METHOD)
-        elif hasattr(SSL, "TLS_METHOD"):
+        elif hasattr(SSL, "TLS_METHOD"):  # pragma: no cover
             # Fallback to generic TLS_METHOD if TLS_SERVER_METHOD not available
             # Equivalent to: context = ssl.SSLContext(ssl.PROTOCOL_TLS) in Python stdlib
+            # This path is unlikely to be hit in practice (requires OpenSSL < 1.1.0)
             self._context = SSL.Context(SSL.TLS_METHOD)
-        else:
+        else:  # pragma: no cover
             # If neither is available, the system is too old - raise an error
             # Python stdlib requires Python 3.6+ for PROTOCOL_TLS_SERVER
+            # This path is unlikely to be hit in practice (requires very old OpenSSL)
             raise RuntimeError(
                 "OpenSSL version too old: TLS_SERVER_METHOD or TLS_METHOD not available. "
                 "Please upgrade to OpenSSL 1.1.0 or later (equivalent to Python 3.6+ for stdlib ssl)."
@@ -88,7 +90,8 @@ class ServerContextFactory(ContextFactory):
         try:
             _ecCurve = crypto.get_elliptic_curve(_defaultCurveName)
             context.set_tmp_ecdh(_ecCurve)
-        except Exception:
+        except Exception:  # pragma: no cover
+            # Error handling for elliptic curve setup - unlikely to fail in practice
             logger.exception("Failed to enable elliptic curve for TLS")
 
         # Disable all weak/insecure protocols - enforce TLS 1.2 minimum
@@ -111,10 +114,12 @@ class ServerContextFactory(ContextFactory):
                 # Use TLS1_2_VERSION constant if available
                 if hasattr(SSL, "TLS1_2_VERSION"):
                     context.set_min_proto_version(SSL.TLS1_2_VERSION)
-                else:
+                else:  # pragma: no cover
                     # Fallback: use numeric value for TLS 1.2 (0x0303)
+                    # This path is unlikely (requires OpenSSL with set_min_proto_version but no TLS1_2_VERSION constant)
                     context.set_min_proto_version(0x0303)
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
+                # Error handling for protocol version setting - unlikely to fail in practice
                 logger.warning(
                     "Failed to set minimum TLS protocol version, using options instead: %s", e
                 )

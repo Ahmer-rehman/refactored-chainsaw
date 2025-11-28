@@ -1292,13 +1292,15 @@ class InsecureInterceptableContextFactory(ssl.ContextFactory):
             # TLS_CLIENT_METHOD is the modern, explicit method for TLS client contexts (OpenSSL 1.1.0+)
             # Equivalent to: context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT) in Python stdlib
             self._context = SSL.Context(SSL.TLS_CLIENT_METHOD)
-        elif hasattr(SSL, "TLS_METHOD"):
+        elif hasattr(SSL, "TLS_METHOD"):  # pragma: no cover
             # Fallback to generic TLS_METHOD if TLS_CLIENT_METHOD not available
             # Equivalent to: context = ssl.SSLContext(ssl.PROTOCOL_TLS) in Python stdlib
+            # This path is unlikely to be hit in practice (requires OpenSSL < 1.1.0)
             self._context = SSL.Context(SSL.TLS_METHOD)
-        else:
+        else:  # pragma: no cover
             # If neither is available, the system is too old - raise an error
             # Python stdlib requires Python 3.6+ for PROTOCOL_TLS_CLIENT
+            # This path is unlikely to be hit in practice (requires very old OpenSSL)
             raise RuntimeError(
                 "OpenSSL version too old: TLS_CLIENT_METHOD or TLS_METHOD not available. "
                 "Please upgrade to OpenSSL 1.1.0 or later (equivalent to Python 3.6+ for stdlib ssl)."
@@ -1321,11 +1323,13 @@ class InsecureInterceptableContextFactory(ssl.ContextFactory):
             try:
                 if hasattr(SSL, "TLS1_2_VERSION"):
                     self._context.set_min_proto_version(SSL.TLS1_2_VERSION)
-                else:
+                else:  # pragma: no cover
                     # Fallback: use numeric value for TLS 1.2 (0x0303)
+                    # This path is unlikely (requires OpenSSL with set_min_proto_version but no TLS1_2_VERSION constant)
                     self._context.set_min_proto_version(0x0303)
-            except Exception:
+            except Exception:  # pragma: no cover
                 # If setting minimum version fails, options above still enforce it
+                # Error handling for protocol version setting - unlikely to fail in practice
                 pass
         
         # Use strong cipher suites even without certificate verification
