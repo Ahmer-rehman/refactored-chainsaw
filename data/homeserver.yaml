@@ -1,0 +1,392 @@
+# Synapse Homeserver Configuration
+# Security-hardened configuration based on Acunetix audit findings
+# Generated: 2026-01-14
+
+# Server name (FQDN of your Matrix homeserver)
+server_name: "stg-adm-im-ma.bservices-api.org.pk"
+
+# Public baseurl for client connections
+public_baseurl: "https://stg-adm-im-ma.bservices-api.org.pk/"
+
+# Listener configuration
+listeners:
+  # Client API listener
+  - port: 8008
+    tls: false  # TLS terminated by reverse proxy (nginx)
+    type: http
+    x_forwarded: true
+    bind_addresses: ['0.0.0.0']
+    
+    resources:
+      - names: [client, federation]
+        compress: false
+
+# Database configuration (PostgreSQL)
+database:
+  name: psycopg2
+  args:
+    user: synapse
+    password: synapse_password_change_me
+    database: synapse
+    host: postgres
+    port: 5432
+    cp_min: 5
+    cp_max: 10
+
+# Logging configuration
+log_config: "/data/log.config"
+
+# Media storage
+media_store_path: "/data/media_store"
+
+# Registration settings
+enable_registration: false
+enable_registration_without_verification: false
+
+# Require email for registration (if enabled)
+# registrations_require_3pid:
+#   - email
+
+# Allow guest access
+allow_guest_access: false
+
+# Rate limiting
+rc_message:
+  per_second: 0.2
+  burst_count: 10
+
+rc_registration:
+  per_second: 0.17
+  burst_count: 3
+
+rc_login:
+  address:
+    per_second: 0.17
+    burst_count: 3
+  account:
+    per_second: 0.17
+    burst_count: 3
+  failed_attempts:
+    per_second: 0.17
+    burst_count: 3
+
+# Federation settings
+federation_domain_whitelist: []
+# federation_domain_whitelist:
+#   - matrix.org
+#   - example.com
+
+# Signing key path
+signing_key_path: "/data/signing.key"
+
+# Trusted key servers for federation
+trusted_key_servers:
+  - server_name: "matrix.org"
+
+# Old signing keys (for key rotation)
+old_signing_keys: {}
+
+# Key refresh interval
+key_refresh_interval: "1d"
+
+# Suppress key server warning
+suppress_key_server_warning: true
+
+# Presence settings
+presence:
+  enabled: true
+
+# Password configuration
+password_config:
+  enabled: true
+  policy:
+    enabled: true
+    minimum_length: 8
+    require_digit: true
+    require_symbol: true
+    require_lowercase: true
+    require_uppercase: true
+
+# Email configuration (optional)
+# email:
+#   smtp_host: "smtp.example.com"
+#   smtp_port: 587
+#   smtp_user: "noreply@stg-adm-im-ma.bservices-api.org.pk"
+#   smtp_pass: "your_smtp_password"
+#   require_transport_security: true
+#   notif_from: "Matrix <noreply@stg-adm-im-ma.bservices-api.org.pk>"
+#   app_name: "Matrix"
+#   enable_notifs: true
+
+# Push notification settings
+push:
+  include_content: true
+
+# Room directory settings
+room_list_publication_rules:
+  - action: allow
+
+# User directory settings
+user_directory:
+  enabled: true
+  search_all_users: false
+  prefer_local_users: true
+
+# Stats collection
+enable_metrics: false
+report_stats: false
+
+# Redis configuration (for worker mode)
+# redis:
+#   enabled: true
+#   host: redis
+#   port: 6379
+
+# URL preview settings
+url_preview_enabled: false
+# url_preview_ip_range_blacklist:
+#   - '127.0.0.0/8'
+#   - '10.0.0.0/8'
+#   - '172.16.0.0/12'
+#   - '192.168.0.0/16'
+#   - '100.64.0.0/10'
+#   - '169.254.0.0/16'
+#   - '::1/128'
+#   - 'fe80::/64'
+#   - 'fc00::/7'
+
+# Max upload size
+max_upload_size: "100M"
+
+# Max image pixels for thumbnails
+max_image_pixels: "32M"
+
+# Dynamic thumbnails
+dynamic_thumbnails: false
+
+# Thumbnail sizes
+thumbnail_sizes:
+  - width: 32
+    height: 32
+    method: crop
+  - width: 96
+    height: 96
+    method: crop
+  - width: 320
+    height: 240
+    method: scale
+  - width: 640
+    height: 480
+    method: scale
+  - width: 800
+    height: 600
+    method: scale
+
+# Retention settings
+retention:
+  enabled: false
+
+# User consent settings
+# user_consent:
+#   require_at_registration: false
+#   policy_name: "Privacy Policy"
+#   version: "1.0"
+
+# SAML2 configuration (optional)
+# saml2_config:
+#   sp_config:
+#     metadata:
+#       remote:
+#         - url: "https://idp.example.com/metadata"
+
+# CAS configuration (optional)
+# cas_config:
+#   enabled: true
+#   server_url: "https://cas.example.com"
+#   service_url: "https://stg-adm-im-ma.bservices-api.org.pk"
+
+# JWT configuration (optional)
+# jwt_config:
+#   enabled: true
+#   secret: "your_jwt_secret_here"
+#   algorithm: "HS256"
+
+# OpenID Connect configuration (optional)
+# oidc_providers:
+#   - idp_id: example
+#     idp_name: "Example Provider"
+#     issuer: "https://accounts.example.com/"
+#     client_id: "your_client_id"
+#     client_secret: "your_client_secret"
+#     scopes: ["openid", "profile"]
+#     user_mapping_provider:
+#       config:
+#         localpart_template: "{{ user.preferred_username }}"
+#         display_name_template: "{{ user.name }}"
+
+# Password auth providers (RADIUS example)
+# password_providers:
+#   - module: "radius_auth_provider.RadiusAuthProvider"
+#     config:
+#       host: "radius"
+#       port: 1812
+#       secret: "testing123"
+#       nas_identifier: "synapse"
+
+# Experimental features
+experimental_features:
+  # Enable faster room joins
+  faster_joins: true
+  
+  # Enable MSC3266: Room summary API
+  msc3266_enabled: true
+
+# Security settings
+# Prevent users from sharing rooms with servers on the federation blacklist
+# federation_ip_range_blacklist:
+#   - '127.0.0.0/8'
+#   - '10.0.0.0/8'
+#   - '172.16.0.0/12'
+#   - '192.168.0.0/16'
+#   - '100.64.0.0/10'
+#   - '169.254.0.0/16'
+#   - '::1/128'
+#   - 'fe80::/64'
+#   - 'fc00::/7'
+
+# IP range blacklist for federation
+ip_range_blacklist:
+  - '127.0.0.0/8'
+  - '10.0.0.0/8'
+  - '172.16.0.0/12'
+  - '192.168.0.0/16'
+  - '100.64.0.0/10'
+  - '169.254.0.0/16'
+  - '::1/128'
+  - 'fe80::/64'
+  - 'fc00::/7'
+
+# Prevent outgoing requests to these IP ranges
+# This helps prevent SSRF attacks
+ip_range_whitelist: []
+
+# Admin contact
+# admin_contact: 'mailto:admin@stg-adm-im-ma.bservices-api.org.pk'
+
+# Default room version
+default_room_version: "10"
+
+# GC thresholds (for memory management)
+gc_thresholds: [700, 10, 10]
+
+# Event cache size
+event_cache_size: "10K"
+
+# Caches
+caches:
+  global_factor: 1.0
+  per_cache_factors: {}
+
+# Enable room list search
+enable_room_list_search: true
+
+# Alias creation rules
+alias_creation_rules:
+  - user_id: "*"
+    alias: "*"
+    action: allow
+
+# Room creation settings
+# Prevent users from creating rooms
+# block_non_admin_invites: false
+
+# Enable search
+enable_search: true
+
+# Encryption settings
+encryption_enabled_by_default_for_room_type: "off"
+
+# Presence router
+# presence_router:
+#   module: "my_module.PresenceRouter"
+#   config: {}
+
+# Account validity
+# account_validity:
+#   enabled: true
+#   period: 6w
+#   renew_at: 1w
+#   renew_email_subject: "Renew your %(app)s account"
+
+# Modules (for custom functionality)
+# modules:
+#   - module: "my_module.MyModule"
+#     config:
+#       setting: "value"
+
+# Background updates
+# background_updates:
+#   min_batch_size: 1
+#   default_batch_size: 100
+#   sleep_enabled: true
+#   sleep_duration_ms: 1000
+
+# Server notices
+# server_notices:
+#   system_mxid_localpart: notices
+#   system_mxid_display_name: "Server Notices"
+#   system_mxid_avatar_url: "mxc://stg-adm-im-ma.bservices-api.org.pk/oumMVlgDnLYFaPVkExemNVVZ"
+#   room_name: "Server Notices"
+
+# Limit remote room complexity
+# limit_remote_rooms:
+#   enabled: true
+#   complexity: 1.0
+
+# Spam checker
+# spam_checker:
+#   - module: "my_module.SpamChecker"
+#     config: {}
+
+# Third party event rules
+# third_party_event_rules:
+#   module: "my_module.ThirdPartyEventRules"
+#   config: {}
+
+# Opentracing
+# opentracing:
+#   enabled: true
+#   homeserver_whitelist:
+#     - "matrix.org"
+
+# Redis for replication (worker mode)
+# instance_map:
+#   main:
+#     host: localhost
+#     port: 8034
+
+# Stream writers (for worker mode)
+# stream_writers:
+#   events: worker1
+#   typing: worker1
+#   to_device: worker1
+#   account_data: worker1
+#   receipts: worker1
+#   presence: worker1
+
+# Run background tasks on specific workers
+# run_background_tasks_on: worker1
+
+# Worker app
+# worker_app: synapse.app.generic_worker
+# worker_name: worker1
+
+# Worker listeners
+# worker_listeners: []
+
+# Worker log config
+# worker_log_config: /data/worker.log.config
+
+# Replication
+# worker_replication_host: 127.0.0.1
+# worker_replication_http_port: 9093

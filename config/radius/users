@@ -1,0 +1,27 @@
+# RADIUS Users Configuration
+# Define users for RADIUS authentication
+
+# Example admin user
+admin Cleartext-Password := "admin123"
+    Reply-Message = "Welcome Admin"
+
+# Example regular user
+testuser Cleartext-Password := "testpass123"
+    Reply-Message = "Welcome User"
+
+# Example user with additional attributes
+john Cleartext-Password := "john123"
+    Reply-Message = "Welcome John",
+    Framed-IP-Address = 192.168.1.100,
+    Framed-IP-Netmask = 255.255.255.0
+
+# Group-based authentication example
+# DEFAULT Group == "admins", Auth-Type := Accept
+#     Reply-Message = "Welcome Admin User"
+
+# DEFAULT Group == "users", Auth-Type := Accept
+#     Reply-Message = "Welcome Regular User"
+
+# Deny all other users
+# DEFAULT Auth-Type := Reject
+#     Reply-Message = "Access Denied"

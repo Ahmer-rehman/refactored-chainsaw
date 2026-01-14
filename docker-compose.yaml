@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  synapse:
+    container_name: matrix-synapse
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: local-synapse:latest
+    restart: unless-stopped
+    ports:
+      - "8008:8008"
+      - "8448:8448"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data:/data
+      - ./radius_auth_provider:/modules/radius_auth_provider
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/homeserver.yaml
+      - SYNAPSE_POSTGRES_HOST=postgres
+      - PYTHONPATH=/modules
+    networks:
+      synapse-network:
+        aliases:
+          - stg-adm-im-ma.bservices-api.org.pk
+    healthcheck:
+      test: ["CMD", "curl", "-fSs", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    container_name: synapse-postgres
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: synapse
+      POSTGRES_USER: synapse
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-synapse_password_change_me}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      LANG: C
+      LC_ALL: C
+    volumes:
+      - synapse_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U synapse -d synapse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - synapse-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: synapse-redis
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    restart: unless-stopped
+    volumes:
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - synapse_redis_data:/data
+    networks:
+      - synapse-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Optional: RADIUS server for authentication
+  # Uncomment if you need RADIUS authentication
+  # radius:
+  #   container_name: freeradius
+  #   image: freeradius/freeradius-server:latest
+  #   restart: unless-stopped
+  #   command: ["freeradius", "-f"]
+  #   ports:
+  #     - "1812:1812/udp"
+  #     - "1813:1813/udp"
+  #   volumes:
+  #     - ./config/radius/clients.conf:/etc/freeradius/clients.conf:ro
+  #     - ./config/radius/users:/etc/freeradius/users:ro
+  #     - ./logs/radius:/var/log/freeradius
+  #   networks:
+  #     - synapse-network
+
+  # Optional: Nginx reverse proxy with security headers
+  # Uncomment to use nginx as reverse proxy
+  # nginx:
+  #   container_name: synapse-nginx
+  #   image: nginx:alpine
+  #   restart: unless-stopped
+  #   ports:
+  #     - "443:443"
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx/stg-adm-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  #     - ./config/ssl:/etc/ssl:ro
+  #   depends_on:
+  #     - synapse
+  #   networks:
+  #     - synapse-network
+
+networks:
+  synapse-network:
+    driver: bridge
+
+volumes:
+  synapse_pg_data:
+    driver: local
+  synapse_redis_data:
+    driver: local
