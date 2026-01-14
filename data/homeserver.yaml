@@ -3,10 +3,10 @@
 # Generated: 2026-01-14
 
 # Server name (FQDN of your Matrix homeserver)
-server_name: "stg-adm-im-ma.bservices-api.org.pk"
+server_name: "lk-auth-im.averox.com"
 
 # Public baseurl for client connections
-public_baseurl: "https://stg-adm-im-ma.bservices-api.org.pk/"
+public_baseurl: "https://lk-auth-im.averox.com/"
 
 # Listener configuration
 listeners:

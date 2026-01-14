@@ -24,7 +24,7 @@ services:
     networks:
       synapse-network:
         aliases:
-          - stg-adm-im-ma.bservices-api.org.pk
+          - lk-auth-im.averox.com
     healthcheck:
       test: ["CMD", "curl", "-fSs", "http://localhost:8008/health"]
       interval: 30s
