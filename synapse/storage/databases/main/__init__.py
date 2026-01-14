@@ -118,6 +118,7 @@ class DataStore(
     DeviceStore,
     RoomMemberStore,
     RoomStore,
+    TwoFactorStore,
     RegistrationStore,
     ProfileStore,
     PresenceStore,
@@ -161,7 +162,6 @@ class DataStore(
     TaskSchedulerWorkerStore,
     SlidingSyncStore,
     DelayedEventsStore,
-    TwoFactorStore,
 ):
     def __init__(
         self,
